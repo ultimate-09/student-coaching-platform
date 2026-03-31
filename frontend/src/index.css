@@ -1123,8 +1123,6 @@ h1, h2, h3, h4, h5, h6 {
   background-color: #FEE2E2;
 }
 
-.stat-card-info {}
-
 .stat-card-value {
   font-size: 1.625rem;
   font-weight: 800;
@@ -1493,8 +1491,6 @@ h1, h2, h3, h4, h5, h6 {
   gap: 2.5rem;
   align-items: start;
 }
-
-.course-detail-main {}
 
 .course-section-title {
   font-size: 1.25rem;
