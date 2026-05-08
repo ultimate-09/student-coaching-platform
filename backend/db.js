@@ -12,6 +12,15 @@ if (!fs.existsSync(dataDir)) {
 const db = new Database(dbFile)
 db.pragma('journal_mode = WAL')
 
+const bcrypt = require('bcryptjs')
+
+const DEFAULT_ADMIN = {
+  name: 'Admin',
+  email: 'admin@example.com',
+  password: 'admin123456',
+  role: 'admin',
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,6 +74,14 @@ if (courseCount === 0) {
   })
 
   insertMany(seedCourses)
+}
+
+const adminCount = db.prepare('SELECT COUNT(*) AS count FROM users WHERE email = ?').get(DEFAULT_ADMIN.email).count
+if (adminCount === 0) {
+  const adminPasswordHash = bcrypt.hashSync(DEFAULT_ADMIN.password, 10)
+  db.prepare(
+    'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)'
+  ).run(DEFAULT_ADMIN.name, DEFAULT_ADMIN.email, adminPasswordHash, DEFAULT_ADMIN.role)
 }
 
 function listCourses() {
