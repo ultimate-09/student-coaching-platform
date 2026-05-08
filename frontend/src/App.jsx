@@ -11,6 +11,7 @@ import CourseDetail from './pages/CourseDetail'
 import Dashboard from './pages/Dashboard'
 import Payment from './pages/Payment'
 import Profile from './pages/Profile'
+import Admin from './pages/Admin'
 
 function App() {
   return (
@@ -33,6 +34,9 @@ function App() {
               } />
               <Route path="/profil" element={
                 <ProtectedRoute><Profile /></ProtectedRoute>
+              } />
+              <Route path="/admin" element={
+                <ProtectedRoute><Admin /></ProtectedRoute>
               } />
             </Routes>
           </main>

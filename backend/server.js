@@ -12,6 +12,12 @@ const {
   updateUserPassword,
   createPayment,
   listPaymentsByUser,
+  listAllUsers,
+  listAllPayments,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  getStats,
 } = require('./db')
 
 const app = express()
@@ -34,6 +40,14 @@ function authenticateToken(req, res, next) {
   } catch (err) {
     return res.status(401).json({ message: 'Geçersiz veya süresi dolmuş token' })
   }
+}
+
+function adminCheck(req, res, next) {
+  const user = getUserById(req.user.id)
+  if (!user || user.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin yetkisi gerekli' })
+  }
+  next()
 }
 
 // Routes
@@ -139,6 +153,66 @@ app.post('/api/payments/create', authenticateToken, (req, res) => {
 app.get('/api/payments/history', authenticateToken, (req, res) => {
   const userPayments = listPaymentsByUser(req.user.id)
   res.json({ success: true, payments: userPayments })
+})
+
+// Admin Routes
+app.get('/api/admin/stats', authenticateToken, adminCheck, (req, res) => {
+  const stats = getStats()
+  res.json(stats)
+})
+
+app.get('/api/admin/users', authenticateToken, adminCheck, (req, res) => {
+  const users = listAllUsers()
+  res.json(users)
+})
+
+app.get('/api/admin/payments', authenticateToken, adminCheck, (req, res) => {
+  const payments = listAllPayments()
+  res.json(payments)
+})
+
+app.post('/api/admin/courses', authenticateToken, adminCheck, (req, res) => {
+  const { title, description, price, duration, teacher_name } = req.body
+  if (!title || !description) {
+    return res.status(400).json({ message: 'Title ve description gerekli' })
+  }
+  
+  const course = createCourse({
+    title,
+    description,
+    price: Number(price) || 0,
+    duration: duration || 'Belirsiz',
+    teacher_name: teacher_name || 'Öğretmen'
+  })
+  
+  res.status(201).json(course)
+})
+
+app.put('/api/admin/courses/:id', authenticateToken, adminCheck, (req, res) => {
+  const courseId = Number(req.params.id)
+  const { title, description, price, duration, teacher_name } = req.body
+  
+  const course = getCourseById(courseId)
+  if (!course) return res.status(404).json({ message: 'Kurs bulunamadı' })
+  
+  const updated = updateCourse(courseId, {
+    title: title || course.title,
+    description: description || course.description,
+    price: price !== undefined ? Number(price) : course.price,
+    duration: duration || course.duration,
+    teacher_name: teacher_name || course.teacher_name
+  })
+  
+  res.json(updated)
+})
+
+app.delete('/api/admin/courses/:id', authenticateToken, adminCheck, (req, res) => {
+  const courseId = Number(req.params.id)
+  const course = getCourseById(courseId)
+  if (!course) return res.status(404).json({ message: 'Kurs bulunamadı' })
+  
+  deleteCourse(courseId)
+  res.json({ message: 'Kurs silindi' })
 })
 
 app.listen(PORT, () => {

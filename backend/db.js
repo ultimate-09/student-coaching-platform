@@ -113,6 +113,46 @@ function listPaymentsByUser(userId) {
   return db.prepare('SELECT * FROM payments WHERE user_id = ? ORDER BY id DESC').all(userId)
 }
 
+// Admin functions
+function listAllUsers() {
+  return db.prepare('SELECT id, name, email, role, created_at FROM users ORDER BY id DESC').all()
+}
+
+function listAllPayments() {
+  return db.prepare('SELECT * FROM payments ORDER BY id DESC').all()
+}
+
+function createCourse({ title, description, price, duration, teacher_name }) {
+  const result = db.prepare(
+    'INSERT INTO courses (title, description, price, duration, teacher_name) VALUES (?, ?, ?, ?, ?)'  
+  ).run(title, description, price, duration, teacher_name)
+  
+  return getCourseById(result.lastInsertRowid)
+}
+
+function updateCourse(id, { title, description, price, duration, teacher_name }) {
+  db.prepare(
+    'UPDATE courses SET title = ?, description = ?, price = ?, duration = ?, teacher_name = ? WHERE id = ?'
+  ).run(title, description, price, duration, teacher_name, id)
+  
+  return getCourseById(id)
+}
+
+function deleteCourse(id) {
+  db.prepare('DELETE FROM courses WHERE id = ?').run(id)
+  db.prepare('DELETE FROM payments WHERE course_id = ?').run(id)
+  return true
+}
+
+function getStats() {
+  const totalUsers = db.prepare('SELECT COUNT(*) AS count FROM users WHERE role = "student"').get().count
+  const totalCourses = db.prepare('SELECT COUNT(*) AS count FROM courses').get().count
+  const totalRevenue = db.prepare('SELECT COALESCE(SUM(amount), 0) AS total FROM payments').get().total
+  const totalPayments = db.prepare('SELECT COUNT(*) AS count FROM payments').get().count
+  
+  return { totalUsers, totalCourses, totalRevenue, totalPayments }
+}
+
 module.exports = {
   db,
   listCourses,
@@ -124,4 +164,10 @@ module.exports = {
   updateUserPassword,
   createPayment,
   listPaymentsByUser,
+  listAllUsers,
+  listAllPayments,
+  createCourse,
+  updateCourse,
+  deleteCourse,
+  getStats,
 }
